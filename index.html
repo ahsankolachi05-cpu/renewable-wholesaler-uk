@@ -273,6 +273,16 @@
       .add-mini.added{background:var(--green-700);color:#fff}
       @media (prefers-color-scheme: dark){ .add-mini{color:#8fd6ae;border-color:#3d8b66} .add-mini:hover,.add-mini.added{background:#106347;color:#fff} }
 
+      .kit-box{background:var(--surface-2);border:1.5px solid var(--green-600);border-radius:14px;padding:16px 17px;margin-top:18px}
+      .kit-box h4{margin:0 0 3px;font-size:16px;font-weight:900}
+      .kit-box .kit-sub{font-size:13px;color:var(--ink-2);margin:0 0 8px;line-height:1.45}
+      .kit-line{display:flex;justify-content:space-between;gap:14px;font-size:13.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
+      .kit-line span:first-child{min-width:0}
+      .kit-line span:last-child{font-weight:700;white-space:nowrap}
+      .kit-total{display:flex;justify-content:space-between;align-items:baseline;gap:14px;font-size:17px;font-weight:900;padding:10px 0 0}
+      .kit-total small{font-size:12px;font-weight:700;color:var(--ink-2)}
+      .kit-note{font-size:12px;color:var(--ink-2);margin:5px 0 12px;line-height:1.45}
+
       .modal{position:fixed;inset:0;z-index:95;display:none;place-items:center;padding:18px}
       .modal.show{display:grid}
       .modal-box{background:var(--surface);border-radius:22px;max-width:430px;width:100%;padding:30px;box-shadow:var(--shadow);position:relative;max-height:calc(100dvh - 36px);overflow-y:auto}
@@ -901,6 +911,22 @@
           + '<button type="button" class="add-mini'+(inBasket?' added':'')+'" data-part-add="'+pid+'">'+(inBasket?'In basket ✓':'Add')+'</button>'
           + '</div>';
       });
+      var kitHtml = '';
+      if(p.id==='midea-4'){
+        var kitTotal = unitPrice(p);
+        var kitLines = '<div class="kit-line"><span>'+p.name+' × 1</span><span>'+money(unitPrice(p))+'</span></div>';
+        p.parts.forEach(function(pid){
+          var pt = BYID[pid]; if(!pt) return;
+          kitTotal += unitPrice(pt);
+          kitLines += '<div class="kit-line"><span>'+pt.name+' × 1</span><span>'+money(unitPrice(pt))+'</span></div>';
+        });
+        kitHtml = '<div class="kit-box"><h4>The complete kit for this install</h4>'
+          + '<p class="kit-sub">The Midea 4kW plus everything that goes with it, as one kit — one order, one delivery.</p>'
+          + kitLines
+          + '<div class="kit-total"><span>Kit total</span><span>'+money(kitTotal)+' <small>ex VAT</small></span></div>'
+          + '<p class="kit-note">Sample kit total — the sum of the sample part prices shown above.</p>'
+          + '<button type="button" class="btn amber" id="jobAddKit" style="width:100%">Add the full kit to basket</button></div>';
+      }
       $('jobBody').innerHTML =
           '<div class="job-hero"><img src="'+p.img+'" alt="'+p.name+'" /><div>'
         +   '<h4>'+p.name+'</h4>' + stockHTML(p)
@@ -914,6 +940,7 @@
         + '<h4 class="job-sec-title">You’ll also need with this</h4>'
         + '<p class="job-sec-note">Recommended parts for this product — add them now and everything arrives on one order.</p>'
         + partsHtml
+        + kitHtml
         + '<button type="button" class="btn rec" id="jobAddAll" style="width:100%;margin-top:16px">Add all recommended parts to basket</button>';
       $('jobMinus').addEventListener('click', function(){ if(jobQty>1){ jobQty--; $('jobQtyVal').textContent = jobQty; } });
       $('jobPlus').addEventListener('click', function(){ jobQty++; $('jobQtyVal').textContent = jobQty; });
@@ -928,6 +955,14 @@
         toast('All recommended parts added to basket');
         renderJob();
       });
+      var kitBtn = $('jobAddKit');
+      if(kitBtn){ kitBtn.addEventListener('click', function(){
+        basket[jobId] = (basket[jobId]||0) + 1;
+        p.parts.forEach(function(pid){ if(BYID[pid]) basket[pid] = (basket[pid]||0) + 1; });
+        renderBasketBadge();
+        toast('Full kit added to basket — heat pump plus all ' + p.parts.length + ' parts');
+        renderJob();
+      });}
     }
     $('jobViewBasket').addEventListener('click', function(){ openBasket(); });
     $('heroMideaBtn').addEventListener('click', function(){ openJob('midea-4'); });
